@@ -66,9 +66,9 @@ We must consider values that make sense as a function of time, hence the need fo
 
 ## Aggregation Gateway: Basic Example
 
-Instead of updating values in Prometheus, the aggregation pushgateway will add a sample to what is found in Prometheus. In this example, the values will always be 1 to represent a single installer invocation. Therefore a metric value would represent how many times the installer has been run fitting the criteria described by the labels.
+Instead of updating values in Prometheus, the aggregation pushgateway will add a sample value to the value in Prometheus. In this example, the sample values will always be 1 to represent a single installer invocation. Therefore a metric value in Prometheus would represent how many times the installer has been run fitting the criteria described by the labels.
 
-Now stop the standard push gateway and stop Prometheus.
+Stop the standard push gateway and stop Prometheus.
 
 Start the aggregation pushgateway:
 ```
@@ -106,4 +106,42 @@ On http://localhost:9090/graph (querying `cluster_installation_duration`) you sh
 By using the aggregation pushgateway, we can see the growth over time and the current total of installations broken down by categories in labels.
 
 
+## Aggregation Gateway: Histogram
 
+Grouping installation duration into buckets, e.g. lumping together all installations that took 20-25 minutes, 25-30 minutes, etc., naturally calls for the [histogram metric type](https://prometheus.io/docs/concepts/metric_types/#histogram).
+
+As noted in the link above:
+
+> The Prometheus client libraries offer four core metric types. These are currently only differentiated in the client libraries (to enable APIs tailored to the usage of the specific types) and in the wire protocol. 
+
+We'll use the Go client to illustrate the histogram. 
+
+
+```
+go run histogram.go
+```
+
+A dump of the network shows the sample that was sent:
+
+```
+# TYPE cluster_installation_invocation histogram
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="15"} 0
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="20"} 0
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="25"} 0
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="30"} 1
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="35"} 1
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="40"} 1
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="45"} 1
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="50"} 1
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="55"} 1
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="60"} 1
+cluster_installation_invocation_bucket{command="create",os="linux",target="cluster",le="+Inf"} 1
+cluster_installation_invocation_sum{command="create",os="linux",target="cluster"} 30
+cluster_installation_invocation_count{command="create",os="linux",target="cluster"} 1
+```
+
+The histogram creates buckets through the label `le` (less than or equal). An observed installation duration will be inserted into the appropriate bucket and all buckets greater than. 
+
+If we run the program a few more times and change the values we can see how this works with the aggregation pushgateway. In this case I added 2 more 30 minute installs and a 20 minute install.
+
+![Aggregate Histogram](assets/aggregate-histogram.png)

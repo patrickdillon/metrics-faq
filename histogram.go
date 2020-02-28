@@ -44,7 +44,7 @@ func main() {
 
 		ConstLabels: prometheus.Labels{"os": "linux", "command": "create", "target": "cluster"},
 
-		Buckets: []float64{15, 20, 25, 30, 35, 40, 45, 50, 55, 60},
+		Buckets: []float64{0, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60},
 	}
 
 	clusterInstallationInvocation := prometheus.NewHistogram(histogramOptions)

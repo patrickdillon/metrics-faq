@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	_ "github.com/davecgh/go-spew/spew"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/prometheus/common/expfmt"
@@ -21,13 +21,12 @@ type aggClient struct {
 
 // Do points to the aggregation pushgateway rather than the standard pushgateway.
 func (a *aggClient) Do(req *http.Request) (resp *http.Response, err error) {
-	newReq, _ := http.NewRequest("PUT", "http://localhost/api/ui/metrics", req.Body)
-	//spew.Dump(newReq)
-	return a.Client.Do(newReq)
+	spew.Dump(req)
+	return a.Client.Do(req)
 }
 
 func pushHistogram(c prometheus.Collector) error {
-	return push.New("http://localhost", "my_job").
+	return push.New("localhost", "my_job").
 		Collector(c).
 		Client(&aggClient{&http.Client{}}).
 		Format(expfmt.FmtText).
@@ -57,3 +56,4 @@ func main() {
 		fmt.Println(err)
 	}
 }
+
